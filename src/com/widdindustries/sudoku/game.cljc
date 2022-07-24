@@ -49,48 +49,50 @@
     (when (= 1 (count d))
       (first d))))
 
-(defn group-match [board {:keys [opts] :as cell}]
+(defn order-eliminate [board cell-idx]
+  (reduce
+    (fn [board f]
+      (let [{:keys [opts] :as cell} (get board cell-idx)
+            order (f board cell)]
+        (if-let [solution (eliminate order cell)]
+          (assoc board cell-idx (merge cell-idx
+                                  {:solution solution}))
+          board)))
+    board
+    [b/row b/col b/box]))
+
+(defn group-match [board cell-idx]
   (comment (def f b/row)
     (def cell cell) (def board board) ; (def opts opts)
     )
   (reduce
     (fn [board f]
-      (if-let [group (seq (filter (fn [c] (= opts (:opts c))) (f board cell)))]
-        (let [new-cells (map (fn [cell]
-                               (assoc cell :group opts))
-                          (conj group cell))]
-          (reduce
-            (fn [r n]
-              (assoc r (b/idx n) n))
-            board
-            new-cells))
-        board))
+      (let [{:keys [opts] :as cell} (get board cell-idx)]
+        (if-let [group (seq (filter (fn [c] (= opts (:opts c))) (f board cell)))]
+          (let [new-cells (map (fn [cell]
+                                 (assoc cell :group opts))
+                            (conj group cell))]
+            (reduce
+              (fn [r n]
+                (assoc r (b/idx n) n))
+              board
+              new-cells))
+          board)))
     board
     [b/row b/col b/box]))
 
-(defn sweep-groups [board]
+(defn sweep [board]
   (reduce
-    (fn [r n]
-      (if (solution (get r n))
-        board
-        (group-match r n)))
+    (fn [board n]
+      (cond 
+        (solved? board) (reduced board)
+        (solution (get board n)) board
+        :else (-> board
+                  (sweep-solutions)
+                  ;(group-match n)
+                  (order-eliminate n)
+                  )))
     board
     (keys board)))
-
-(defn sweep [board]
-  (let [board (sweep-solutions board)]
-    (if (solved? board)
-      board 
-      (sweep-groups board))))
-
-#_(defn solve [board]
-  (loop [remaining max-sweeps
-         steps [board]]
-    (let [[board] (last steps)]
-      (cond
-        (solved? board) board
-        (zero? remaining) :fail
-        :else (recur (conj steps (sweep board)) 
-                (dec remaining))))))
 
 
