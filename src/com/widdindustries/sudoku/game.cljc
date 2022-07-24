@@ -14,10 +14,11 @@
                             (b/box board cell))
                           (mapcat (fn [c] (if (solution c)
                                           [(solution c)]
-                                          (:group c)))))]
-      (disj opts solutions))))
+                                          (:group c))))
+                         set)]
+      (set/difference opts solutions))))
 
-(defn final-solution [board cell]
+#_(defn final-solution [board cell]
   (let [open-options (open-options board cell)]
     (when (= 1 (count open-options))
       (first open-options))))
@@ -25,21 +26,33 @@
 (defn sweep-solutions [board]
   (reduce
     (fn [r n]
-      (if (solution n)
-        board
-        (update r n (fn [cell]
+      (update r n (fn [cell]
+                    (if (solution cell)
+                      cell
                       (let [opts (open-options r cell)]
-                        (cond-> (assoc cell :opts opts)
-                          (= 1 (count opts)) (assoc :solution (first opts))))))))
+                        (if (= 1 (count opts))
+                          (assoc cell :solution (first opts))
+                          (assoc cell :opts opts)))))))
     board
-    (keys board)))
+    (keys board))) ;
 
 (defn solved? [board]
   (every? solution (vals board)))
 
-(def max-sweeps 500)
+(defn eliminate [order cell]
+  (let [order-opts (->> order
+                        (mapcat (fn [c] (if (solution c)
+                                          [(solution c)]
+                                          (:opts c))))
+                        set)
+        d (set/difference (:opts cell) order-opts)]
+    (when (= 1 (count d))
+      (first d))))
 
 (defn group-match [board {:keys [opts] :as cell}]
+  (comment (def f b/row)
+    (def cell cell) (def board board) ; (def opts opts)
+    )
   (reduce
     (fn [board f]
       (if-let [group (seq (filter (fn [c] (= opts (:opts c))) (f board cell)))]
@@ -58,7 +71,7 @@
 (defn sweep-groups [board]
   (reduce
     (fn [r n]
-      (if (solution n)
+      (if (solution (get r n))
         board
         (group-match r n)))
     board
@@ -70,7 +83,7 @@
       board 
       (sweep-groups board))))
 
-(defn solve [board]
+#_(defn solve [board]
   (loop [remaining max-sweeps
          steps [board]]
     (let [[board] (last steps)]

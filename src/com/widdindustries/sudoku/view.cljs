@@ -14,19 +14,19 @@
                      :font-size       "40px"}}
      [:tbody
       (doall
-        (for [x (range 9)]
-          ^{:key x}
+        (for [y (range 9)]
+          ^{:key y}
           [:tr
            (doall
-             (for [y (range 9)]
-               ^{:key y}
+             (for [x (range 9)]
+               ^{:key x}
                [:td
                 (merge
                   {:style (merge {:height "50px" :width "50px" :border "solid"}
-                            (when (#{2 5 8} x)
+                            (when (#{2 5 8} y)
                               {:border-bottom "4px solid black"})
                             (when
-                              (#{2 5 8} y)
+                              (#{2 5 8} x)
                               {:border-right "4px solid black"}))}
                   ;(when-not (and @edit (= [x y] (:coord edit))))
                   {:on-click (fn []
@@ -77,6 +77,15 @@
       ]]))
 
 (comment
-  (reset! state starting-boards/a)
-  
+  (reset! state starting-boards/moderate)
+  (reset! state starting-boards/easy)
+  (game/sweep @state)
+  (def x (game/sweep-solutions @state))
+  (get @state {:x 8 :y 4})
+  (get @state {:x 5 :y 8})
+  (game/eliminate
+    (b/box @state {:x 5 :y 8})
+    (get @state {:x 5 :y 8}))
+  (game/group-match x)
+
   )
