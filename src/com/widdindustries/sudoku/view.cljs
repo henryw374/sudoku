@@ -19,12 +19,14 @@
           [:tr
            (doall
              (for [x (range 9)]
-               ^{:key x}
                (let [cell (get @state {:x x :y y})]
+                 ^{:key x}
                  [:td
                   (merge
                     {:title (:opts cell)
-                     :style (merge {:height "50px" :width "50px" :border "solid"}
+                     :style (merge {:text-align    "center" ;
+                                    :vertical-align "middle" ;
+                                    :height        "50px" :width "50px" :border "solid"}
                               (when (#{2 5 8} y)
                                 {:border-bottom "4px solid black"})
                               (when
@@ -70,7 +72,7 @@
                              (let [b (game/sweep @state)]
                                (if (not= b @state)
                                  (reset! state b)
-                                 (js/info "cannot make progress, sorry")))
+                                 (js/alert "cannot make progress, sorry")))
                              )} "step"]] ;;
       [:br]
       [:div
@@ -78,6 +80,7 @@
       ]]))
 
 (comment
+  (require 'starting-boards)
   (reset! state starting-boards/moderate)
   (reset! state starting-boards/easy)
   (game/sweep @state)

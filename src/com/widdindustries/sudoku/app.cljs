@@ -13,7 +13,7 @@
   (js/console.log "Initializing")
   (mount-components))
 
-(defn ^:dev/after-load on-figwheel-reload []
+(defn ^:dev/after-load on-reload []
   (.clear js/console)
   ;(re-frame.core/clear-subscription-cache!)
   (rdom/force-update-all))

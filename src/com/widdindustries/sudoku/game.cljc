@@ -1,20 +1,30 @@
 (ns com.widdindustries.sudoku.game
   (:require [com.widdindustries.sudoku.board :as b]
             [medley.core :as m]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [sc.api]))
 
 (def opts (-> (range 1 10) set))
 
 (defn solution [cell] (:solution cell))
 
+(def orders
+  {:row b/row
+   :col b/col
+   :box b/box})
+
 (defn open-options [board cell]
   (when-not (solution cell)
-    (let [solutions (->> (concat (b/row board cell)
-                            (b/col board cell)
-                            (b/box board cell))
-                          (mapcat (fn [c] (if (solution c)
-                                          [(solution c)]
-                                          (:group c))))
+    (let [solutions (->> orders 
+                         (mapcat (fn [[order-name f]]
+                                   ;(sc.api/defsc [3 -1])
+                                   (let [order (f board cell)
+                                         solutions (keep solution order)
+                                         groups (keep (fn [cell]
+                                                        (or
+                                                          (and (= order-name (:group-order cell))
+                                                            (:group cell)) [])) order)]
+                                     (apply concat solutions groups))))
                          set)]
       (set/difference opts solutions))))
 
@@ -66,20 +76,22 @@
     (def cell cell) (def board board) ; (def opts opts)
     )
   (reduce
-    (fn [board f]
+    (fn [board [order-name f]]
       (let [{:keys [opts] :as cell} (get board cell-idx)]
         (if-let [group (seq (filter (fn [c] (= opts (:opts c))) (f board cell)))]
-          (let [new-cells (map (fn [cell]
-                                 (assoc cell :group opts))
-                            (conj group cell))]
-            (reduce
-              (fn [r n]
-                (assoc r (b/idx n) n))
-              board
-              new-cells))
+          (if (= (count opts) (count (conj group cell)))
+            (let [new-cells (map (fn [cell]
+                                   (assoc cell :group opts :group-order order-name))
+                              (conj group cell))]
+              (reduce
+                (fn [r n]
+                  (assoc r (b/idx n) n))
+                board
+                new-cells))
+            board)
           board)))
     board
-    [b/row b/col b/box]))
+    orders))
 
 (defn sweep [board]
   (reduce
@@ -89,8 +101,8 @@
         (solution (get board n)) board
         :else (-> board
                   (sweep-solutions)
-                  ;(group-match n)
                   (order-eliminate n)
+                  ;(group-match n)
                   )))
     board
     (keys board)))
