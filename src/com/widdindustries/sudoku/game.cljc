@@ -15,9 +15,9 @@
 
 (defn open-options [board cell]
   (when-not (solution cell)
-    (let [solutions (->> orders 
+    (let [solutions (->> orders
                          (mapcat (fn [[order-name f]]
-                                   ;(sc.api/defsc [3 -1])
+                                   ;(sc.api/defsc 1)
                                    (let [order (f board cell)
                                          solutions (keep solution order)
                                          groups (keep (fn [cell]
@@ -29,20 +29,20 @@
       (set/difference opts solutions))))
 
 #_(defn final-solution [board cell]
-  (let [open-options (open-options board cell)]
-    (when (= 1 (count open-options))
-      (first open-options))))
+    (let [open-options (open-options board cell)]
+      (when (= 1 (count open-options))
+        (first open-options))))
 
 (defn sweep-solutions [board]
   (reduce
     (fn [r n]
-      (update r n (fn [cell]
-                    (if (solution cell)
-                      cell
-                      (let [opts (open-options r cell)]
-                        (if (= 1 (count opts))
-                          (assoc cell :solution (first opts))
-                          (assoc cell :opts opts)))))))
+      (let [cell (get r n)]
+        (if (solution cell)
+          r
+          (let [opts (open-options r cell)]
+            (if (= 1 (count opts))
+              (reduced (assoc r n (assoc cell :solution (first opts))))
+              (assoc r n (assoc cell :opts opts)))))))
     board
     (keys board))) ;
 
@@ -59,17 +59,24 @@
     (when (= 1 (count d))
       (first d))))
 
-(defn order-eliminate [board cell-idx]
+(defn order-eliminate [board]
   (reduce
-    (fn [board f]
-      (let [{:keys [opts] :as cell} (get board cell-idx)
-            order (f board cell)]
-        (if-let [solution (eliminate order cell)]
-          (assoc board cell-idx (merge cell-idx
-                                  {:solution solution}))
-          board)))
-    board
-    [b/row b/col b/box]))
+    (fn [r cell-idx]
+      (let [b2 (reduce
+                 (fn [board f]
+                   (let [{:keys [opts] :as cell} (get board cell-idx)
+                         order (f board cell)]
+                     (if-let [solution (eliminate order cell)]
+                       (reduced (assoc board cell-idx (merge cell-idx
+                                                        {:solution solution})))
+                       board)))
+                 r
+                 [b/row b/col b/box])]
+        (if (not= r b2)
+          (reduced b2)
+          r)))
+    board 
+    (keys board)))
 
 (defn group-match [board cell-idx]
   (comment (def f b/row)
@@ -93,18 +100,31 @@
     board
     orders))
 
-(defn sweep [board]
-  (reduce
-    (fn [board n]
-      (cond 
-        (solved? board) (reduced board)
-        (solution (get board n)) board
-        :else (-> board
-                  (sweep-solutions)
-                  (order-eliminate n)
-                  ;(group-match n)
-                  )))
+(defn next-board [board]
+  (reduce 
+    (fn [r n]
+      (let [b' (n r)]
+        (if (not= b' r)
+          (reduced b')
+          r)))
     board
-    (keys board)))
+    [sweep-solutions order-eliminate]))
+
+(defn sweep [board]
+  (loop [states [board]]
+    (let [current-board (last states)]
+      (if (solved? current-board)
+        states
+        (let [next-board (next-board current-board)]
+          (if (= next-board current-board)
+            states
+            (recur (conj states next-board))))))))
 
 
+(comment
+
+  (require 'starting-boards)
+  (reset! state starting-boards/moderate)
+  (def s (sweep starting-boards/moderate))
+  (-> s last solved?)
+  )
