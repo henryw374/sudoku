@@ -1,5 +1,6 @@
 (ns com.widdindustries.sudoku.view
   (:require [com.widdindustries.sudoku.board :as b]
+            [starting-boards]
             [com.widdindustries.sudoku.game :as game]
             [reagent.core :as r]))
 
@@ -19,9 +20,8 @@
                ^{:key x}
                [:td
                 (merge
-                  {:title (:opts cell)
-                   :style (merge {:text-align    "center" ;
-                                  :vertical-align "middle" ;
+                  {:style (merge { ;:text-align    "center" ;
+                                  ;:vertical-align "middle" ;
                                   :height        "50px" :width "50px" :border "solid"}
                             (when (#{2 5 8} y)
                               {:border-bottom "4px solid black"})
@@ -31,11 +31,16 @@
                   {:on-click (fn [] (when on-click (on-click x y)))})
                 (if-let [edit (edit x y)]
                   [edit]
-                  [:span
-                   (or (-> cell :solution)
-                     (-> cell :group str))])])))]))]])
+                  [:div {:style {:display "flex"
+                                 :flex-direction "column"
+                                 :justify-content "space-between"
+                                 }}
+                   [:div {:style {:font-size       "10px"}} (:opts cell)]
+                   [:span
+                    (or (-> cell :solution)
+                      (-> cell :group str))]])])))]))]])
 
-(def entry-state (r/atom b/board))
+(defonce entry-state (r/atom b/board))
 
 (defn entry-board [solution]
   (r/with-let [edit (r/atom nil)]
@@ -74,6 +79,7 @@
 
 (defn solution-view [solution]
   (r/with-let [idx (r/atom 0)]
+    (def b (get @solution @idx))
     [:div  
      (when-not (game/solved? (last @solution))
        [:span "No solution could be found :("])
@@ -101,9 +107,12 @@
 
 (comment
   (require 'starting-boards)
+  (require 'stuck-ats)
+  (reset! entry-state starting-boards/jeff-defeater)
   (reset! entry-state starting-boards/moderate)
+  (reset! entry-state stuck-ats/a)
   (def s (game/sweep starting-boards/moderate))
-  (reset! state starting-boards/easy)
+  
   (game/sweep @state)
   (def x (game/open-options @state {:x 7 :y 8})
     )
@@ -113,6 +122,8 @@
     (b/box @state {:x 5 :y 8})
     (get @state {:x 5 :y 8}))
   (game/group-match x)
+  @entry-state
+  (println (b/position b))
   
 
   )

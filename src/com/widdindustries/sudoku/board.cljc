@@ -49,6 +49,15 @@
                {:x x' :y y'})]
     (vals (select-keys board idxs))))
 
+(defn position [board]
+  (->>
+    (for [y (range 9)
+          x (range 9)]
+      (let [cell (get board {:x x :y y})]
+        (or (:solution cell) "-")))
+    flatten
+    (apply str)))
+
 (comment
   (count (box board {:x 0 :y 0}))
 
