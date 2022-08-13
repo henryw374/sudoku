@@ -12,10 +12,11 @@
       {:modules {:main {:entries ['com.widdindustries.sudoku.app]}}})))
 
 (defn app-release []
-  (sh/sh "cp" "-r" "resources/" "docs/")
+  ;(sh/sh "cp" "-r" "resources/public/" "docs/") need to change js path
   (util/prod-build
     (-> (app-config)
-        (merge {:output-dir "docs/public/cljs-out" })
+        (merge {:asset-path "/sudoku/cljs-out"
+                :output-dir "docs/cljs-out" })
         (dissoc :devtools))))
 
 (defn app-watch []
