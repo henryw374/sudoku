@@ -12,10 +12,10 @@
       {:modules {:main {:entries ['com.widdindustries.sudoku.app]}}})))
 
 (defn app-release []
-  (sh/sh "cp" "-r" "resources/" "dist/")
+  (sh/sh "cp" "-r" "resources/" "docs/")
   (util/prod-build
     (-> (app-config)
-        (merge {:output-dir "dist/public/cljs-out" })
+        (merge {:output-dir "docs/public/cljs-out" })
         (dissoc :devtools))))
 
 (defn app-watch []
