@@ -1,5 +1,6 @@
 (ns cljs
-  (:require [com.widdindustries.tiado-cljs2 :as util]))
+  (:require [com.widdindustries.tiado-cljs2 :as util]
+            [clojure.java.shell :as sh]))
 
 (defn test-watch []
   (util/browser-test-build :watch {}))
@@ -11,8 +12,10 @@
       {:modules {:main {:entries ['com.widdindustries.sudoku.app]}}})))
 
 (defn app-release []
+  (sh/sh "cp" "-r" "resources/" "dist/")
   (util/prod-build
     (-> (app-config)
+        (merge {:output-dir "dist/public/cljs-out" })
         (dissoc :devtools))))
 
 (defn app-watch []
@@ -20,6 +23,7 @@
 
 
 (comment
+  (app-release)
 
   ; start compiling and watching the app
   (app-watch)

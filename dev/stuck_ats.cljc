@@ -1,6 +1,7 @@
 (ns stuck-ats)
 
 (def needs-xwing
+  ;https://www.fiendishsudoku.com/index.html?pos=-21-9-5---6--35-2-3592-6--41-25--6--536-42-91--7-612-52-56--3-7-1--2--5--73-5-4-2
   {{:x 8, :y 4} {:x 8, :y 4, :solution 1},
    {:x 7, :y 2} {:x 7, :y 2},
    {:x 0, :y 0} {:x 0, :y 0},

@@ -100,7 +100,7 @@
     [:div.parent.blue {:style {:display     "grid"
                                :place-items "center"}}
      [:div.box.coral
-      [:h1 "Jefdoku"]
+      [:h2 "Sudoku solver"]
       (if @solution
         [solution-view solution]
         [entry-board solution])]]))
